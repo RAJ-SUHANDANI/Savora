@@ -79,6 +79,15 @@ type DemoClient = {
   removeListener(event: string, listener: (...args: never[]) => void): DemoClient;
 };
 
+/** TEMPORARY diagnostic. Remove once the sign-in stall is understood. */
+let traceSeq = 0;
+const traceStart = Date.now();
+function trace(event: string, detail: string): void {
+  if (!process.env.SAVORA_DEMO_TRACE) return;
+  const ms = String(Date.now() - traceStart).padStart(7, " ");
+  process.stderr.write(`[demo-lock ${ms}ms #${String(++traceSeq).padStart(4, " ")}] ${event} ${detail}\n`);
+}
+
 /**
  * A `pg.Pool` backed by a single PGlite connection.
  *

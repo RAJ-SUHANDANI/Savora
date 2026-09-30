@@ -35,8 +35,13 @@ export const revalidate = 60;
 type Params = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const items = await prisma.menuItem.findMany({ select: { slug: true } });
-  return items.map(({ slug }) => ({ slug }));
+  try {
+    const items = await prisma.menuItem.findMany({ select: { slug: true } });
+    return items.map(({ slug }) => ({ slug }));
+  } catch (error) {
+    console.error("Failed to fetch menu items for static generation:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
