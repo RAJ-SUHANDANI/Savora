@@ -70,11 +70,6 @@ Every image below is a real full-page capture of the running app — no mockups.
 **Home, desktop.** The hero, the seasonal menu preview, the reservation call to
 action and the opening-hours panel. Scroll-triggered reveals throughout.
 
-<img src="docs/screenshots/02-home-mobile.jpg" alt="Savora home page on a phone, light theme" width="30%" align="right">
-
-**Home, phone.** The same page at 390 × 844 — the layout is designed for the
-viewport rather than scaled down to fit it.
-
 ### The menu
 
 <img src="docs/screenshots/03-menu-desktop.jpg" alt="Savora menu page on a desktop, light theme" width="100%">
