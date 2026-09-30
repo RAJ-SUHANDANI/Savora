@@ -36,7 +36,7 @@ Two things make it more than a brochure:
 
 ## 🚀 Live demo
 
-👉 **[View Deployment on Vercel](https://vercel.com/raj-suhandanis-projects/savora)**
+👉 **[View Deployment on Vercel](https://savora-booking-engine.vercel.app/)**
 
 The deployed preview runs [demo mode](#demo-mode-no-database-server): it boots
 its own PostgreSQL, applies both migrations and seeds itself on first request.
