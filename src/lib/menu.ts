@@ -20,17 +20,27 @@ export async function getMenuItems(options?: {
   category?: MenuCategory;
   includeUnavailable?: boolean;
 }) {
-  return prisma.menuItem.findMany({
-    where: {
-      ...(options?.includeUnavailable ? {} : { isAvailable: true }),
-      ...(options?.category ? { category: options.category } : {}),
-    },
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
-  });
+  try {
+    return await prisma.menuItem.findMany({
+      where: {
+        ...(options?.includeUnavailable ? {} : { isAvailable: true }),
+        ...(options?.category ? { category: options.category } : {}),
+      },
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
+    });
+  } catch (error) {
+    console.error("Failed to fetch menu items:", error);
+    return [];
+  }
 }
 
 export async function getMenuItemBySlug(slug: string) {
-  return prisma.menuItem.findUnique({ where: { slug } });
+  try {
+    return await prisma.menuItem.findUnique({ where: { slug } });
+  } catch (error) {
+    console.error(`Failed to fetch menu item by slug ${slug}:`, error);
+    return null;
+  }
 }
 
 /**
@@ -39,30 +49,40 @@ export async function getMenuItemBySlug(slug: string) {
  * section is never empty.
  */
 export async function getRelatedItems(itemId: string, category: MenuCategory, limit = 3) {
-  const sameCategory = await prisma.menuItem.findMany({
-    where: { id: { not: itemId }, category, isAvailable: true },
-    orderBy: [{ isSignature: "desc" }, { sortOrder: "asc" }],
-    take: limit,
-  });
-  if (sameCategory.length >= limit) return sameCategory;
+  try {
+    const sameCategory = await prisma.menuItem.findMany({
+      where: { id: { not: itemId }, category, isAvailable: true },
+      orderBy: [{ isSignature: "desc" }, { sortOrder: "asc" }],
+      take: limit,
+    });
+    if (sameCategory.length >= limit) return sameCategory;
 
-  const filler = await prisma.menuItem.findMany({
-    where: {
-      id: { notIn: [itemId, ...sameCategory.map((i) => i.id)] },
-      isAvailable: true,
-    },
-    orderBy: { isSignature: "desc" },
-    take: limit - sameCategory.length,
-  });
-  return [...sameCategory, ...filler];
+    const filler = await prisma.menuItem.findMany({
+      where: {
+        id: { notIn: [itemId, ...sameCategory.map((i) => i.id)] },
+        isAvailable: true,
+      },
+      orderBy: { isSignature: "desc" },
+      take: limit - sameCategory.length,
+    });
+    return [...sameCategory, ...filler];
+  } catch (error) {
+    console.error("Failed to fetch related items:", error);
+    return [];
+  }
 }
 
 export async function getSignatureItems(limit = 6) {
-  return prisma.menuItem.findMany({
-    where: { isAvailable: true, isSignature: true },
-    orderBy: { sortOrder: "asc" },
-    take: limit,
-  });
+  try {
+    return await prisma.menuItem.findMany({
+      where: { isAvailable: true, isSignature: true },
+      orderBy: { sortOrder: "asc" },
+      take: limit,
+    });
+  } catch (error) {
+    console.error("Failed to fetch signature items:", error);
+    return [];
+  }
 }
 
 /** A guest's saved dishes. Returns an empty array for anonymous visitors. */
