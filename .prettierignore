@@ -1,0 +1,9 @@
+node_modules
+.next
+build
+out
+next-env.d.ts
+
+# Local PostgreSQL data directory created by `npm run db:up`
+.postgres-data
+*.tsbuildinfo

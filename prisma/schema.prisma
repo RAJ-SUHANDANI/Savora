@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * Prisma schema for Savora.
+ *
+ * Notes on the non-obvious decisions:
+ *
+ * 1. `Reservation.slot` is a `tstzrange` and there is a **PostgreSQL exclusion
+ *    constraint** on it (see the raw migration). That makes overlapping
+ *    double-bookings impossible at the database level rather than merely
+ *    unlikely — two concurrent requests cannot both win the race, because the
+ *    loser gets a constraint violation (SQLSTATE 23P01) and is retried against
+ *    a fresh table. This is the single most important guarantee in the product.
+ *
+ * 2. Money is stored as integer minor units (cents) to avoid float drift. A
+ *    `Decimal` in Prisma maps to `numeric` which is correct, but integer cents
+ *    is simpler to reason about in the UI and in analytics. `priceCents` is the
+ *    canonical field; `price` exists only as a generated convenience.
+ *
+ * 3. Times are stored as full `timestamptz` instants derived from a date + a
+ *    wall-clock service time in the restaurant's timezone. Storing "19:30" alone
+ *    would be ambiguous and unindexable.
+ */
+
+/** Which side of the house a table sits in. */
+enum Zone {
+  INDOOR
+  OUTDOOR
+  PRIVATE
+}
+
+/** Lifecycle of a booking. `HELD` is a soft 10-minute hold during checkout. */
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum DietaryTag {
+  VEGAN
+  VEGETARIAN
+  GLUTEN_FREE
+  DAIRY_FREE
+  SPICY
+  NUT_FREE
+  PORK_FREE
+  SHELLFISH
+}
+
+enum MenuCategory {
+  STARTERS
+  MAINS
+  DESSERTS
+  DRINKS
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  /// bcrypt hash. Used by the Credentials provider; the Prisma adapter models
+  /// only handle OAuth, which is why the field is `String?` (OAuth-only users
+  /// never set it).
+  password      String?
+
+  /// Staff-only note, e.g. "allergic to nuts" or "always seat on the patio".
+  staffNotes    String?
+
+  accounts      Account[]
+  sessions      Session[]
+  reservations  Reservation[]
+  favorites     Favorite[]
+
+  @@index([role])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model RestaurantTable {
+  id       String @id @default(cuid())
+  /// Human-facing label used by staff ("T1", "Patio 2").
+  number   Int    @unique
+  capacity Int
+  zone     Zone   @default(INDOOR)
+  /// Set false to retire a table without losing its booking history.
+  isActive Boolean @default(true)
+
+  /// Optional grouping into a named room/section of the floor plan.
+  sectionId String?
+  section   FloorSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
+  reservations Reservation[]
+
+  @@index([zone])
+  @@index([capacity])
+}
+
+/// A table layout template the owner can assign tables to (main room, patio...).
+model FloorSection {
+  id        String   @id @default(cuid())
+  name      String
+  zone      Zone
+  sortOrder Int      @default(0)
+
+  tables RestaurantTable[]
+}
+
+model Reservation {
+  id         String            @id @default(cuid())
+  /// Business date the guest dines on, in the restaurant's timezone.
+  date       DateTime          @db.Date
+  /// Wall-clock seating time as minutes since midnight — used for display and
+  /// for the slot grid. The absolute instant lives in `slot`.
+  time       String
+  /// The concrete instant the party is seated, in UTC. Indexed and constrained.
+  startsAt   DateTime          @db.Timestamptz(3)
+  endsAt     DateTime          @db.Timestamptz(3)
+  /// Denormalised tstzrange mirroring [startsAt, endsAt). This is a
+  /// `GENERATED ALWAYS` column — PostgreSQL derives it, so it can never drift
+  /// from the timestamps. The exclusion constraint below operates on it, and
+  /// Prisma must never write to it.
+  slot       Unsupported("tstzrange")?
+
+  partySize  Int
+  status     ReservationStatus @default(PENDING)
+  zonePref   Zone?
+
+  specialRequests String?
+  occasion        String?
+
+  /// Walk-in / phone bookings created by staff are attributed to this user.
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tableId   String?
+  table     RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  /// Guest details are captured at booking time so a guest can be looked up
+  /// and contacted even if they never create an account.
+  guestName  String
+  guestEmail String
+  guestPhone String?
+
+  confirmationCode String   @unique
+  /// Short code embedded in the QR / manage-booking link.
+  manageToken      String   @unique
+  reminderSentAt   DateTime?
+  cancelledAt      DateTime?
+  cancelReason     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([startsAt])
+  @@index([status])
+  @@index([userId])
+  @@index([guestEmail])
+  @@index([tableId, startsAt])
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  description String
+  priceCents  Int
+  category    MenuCategory
+  imageUrl    String
+  /// Sorted within a category on the public menu.
+  sortOrder   Int          @default(0)
+  tags        DietaryTag[] @default([])
+  isAvailable Boolean      @default(true)
+  /// Set when a dish sells out; the card stays visible but marked, rather than
+  /// vanishing — customers like to know what they missed.
+  isSoldOut   Boolean      @default(false)
+
+  ingredients String[] @default([])
+  allergens   String[] @default([])
+  calories    Int?
+  isSignature Boolean  @default(false)
+  chefNote    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites Favorite[]
+
+  @@index([category])
+  @@index([isAvailable])
+}
+
+model Favorite {
+  userId    String
+  menuItemId String
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menuItem MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, menuItemId])
+}
+
+/// Someone who asked to hear about seasonal menus.
+///
+/// Deliberately not a `User`: a newsletter signup is an email address and
+/// nothing else, and giving it a row in `User` would mean inventing a password,
+/// a name and a role for someone who has never signed in. It also means the
+/// signup form cannot be mistaken for an account, and the two `DELETE` paths
+/// cannot be confused.
+model NewsletterSubscriber {
+  /// The address itself is the primary key, so signing up twice is a no-op
+  /// rather than a duplicate row, and re-subscribing after a delete just works.
+  /// Stored already lower-cased and trimmed by the route, because
+  /// `Ada@Example.com` and `ada@example.com` are one person and the unique index
+  /// would otherwise keep both.
+  email     String   @id
+  createdAt DateTime @default(now())
+  /// Set when the address is removed, so the row can be kept for a suppression
+  /// list instead of silently re-accepting an unsubscribe on the next signup.
+  unsubscribedAt DateTime?
+}
+
+/// Singleton row (id = 1) holding everything the owner can tune.
+model RestaurantSettings {
+  id Int @id @default(1)
+
+  name    String @default("Savora")
+  tagline String @default("Seasonal Mediterranean cooking in the heart of the city")
+  address String @default("18 Alder Lane, Colchester, CO1 1SP")
+  phone   String @default("+44 1206 555 0188")
+  email   String @default("reservations@savora.example")
+
+  /// JSON: `{ "mon-fri": [["12:00","14:30"],["18:00","22:00"]], ... }`
+  /// Stored as JSON because the shape is open-ended and only read wholesale.
+  openingHours Unsupported("jsonb") @default(dbgenerated("'{}'::jsonb"))
+
+  /// ISO dates (`YYYY-MM-DD`) the kitchen is closed.
+  holidays String[] @default([])
+
+  maxPartySize    Int     @default(12)
+  /// How many days ahead a guest may book.
+  bookingWindowDays Int   @default(30)
+  /// Minutes a table is held after seating — the turnaround/cleaning buffer
+  /// that feeds the `endsAt` computation and therefore the exclusion constraint.
+  diningDurationMin Int  @default(90)
+  /// How long before the slot that a hold expires if unpaid/unconfirmed.
+  holdDurationMin  Int  @default(10)
+  /// Minimum notice for same-day bookings.
+  minNoticeHours    Int  @default(2)
+  /// IANA zone used to interpret wall-clock `openingHours` and booking dates.
+  timezone          String @default("Europe/London")
+
+  currency String @default("GBP")
+  /// Whether to accept new reservations at all — the owner's kill switch.
+  isAcceptingReservations Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
