@@ -76,10 +76,15 @@ function toSettings(row: RawSettingsRow): SavoraSettings {
 }
 
 export async function fetchSettingsRow(): Promise<SavoraSettings | null> {
-  const rows = await prisma.$queryRawUnsafe<RawSettingsRow[]>(
-    `SELECT ${SETTINGS_COLUMNS} FROM "RestaurantSettings" WHERE "id" = 1`,
-  );
-  return rows[0] ? toSettings(rows[0]) : null;
+  try {
+    const rows = await prisma.$queryRawUnsafe<RawSettingsRow[]>(
+      `SELECT ${SETTINGS_COLUMNS} FROM "RestaurantSettings" WHERE "id" = 1`,
+    );
+    return rows[0] ? toSettings(rows[0]) : null;
+  } catch (error) {
+    console.error("Failed to fetch settings row:", error);
+    return null;
+  }
 }
 
 export type SettingsUpdate = Partial<

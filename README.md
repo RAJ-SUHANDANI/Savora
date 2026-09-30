@@ -1,10 +1,10 @@
 <div align="center">
 
-# Savora
+# 🍽️ Savora
 
-### Seasonal Mediterranean cooking in the heart of the city
+### Seasonal Mediterranean cooking in the heart of the city 🌿
 
-**A restaurant site with a booking engine that cannot double-book a table.**
+**A beautifully crafted restaurant site with a booking engine that guarantees no double-booking.** ✨
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.7-000000?logo=next.js&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19.3.0-087ea4?logo=react&logoColor=white)](https://react.dev)
@@ -12,8 +12,9 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Prisma](https://img.shields.io/badge/Prisma-7-2d3748?logo=prisma&logoColor=white)](https://www.prisma.io)
 [![License: MIT](https://img.shields.io/badge/license-MIT-c4623f.svg)](LICENSE)
+[![Deployed on Vercel](https://vercelbadge.vercel.app/api/raj-suhandanis-projects/savora)](https://vercel.com/raj-suhandanis-projects/savora)
 
-[Live demo](#live-demo) · [Quick start](#quick-start) · [Screenshots](#screenshots) · [The double-booking guarantee](#the-double-booking-guarantee)
+[Live demo](#-live-demo) · [Quick start](#-quick-start) · [Screenshots](#-screenshots) · [The double-booking guarantee](#️-the-double-booking-guarantee)
 
 </div>
 
@@ -33,9 +34,9 @@ Two things make it more than a brochure:
    migrations and the same seed run inside the process on PostgreSQL compiled to
    WebAssembly. See [demo mode](#demo-mode-no-database-server).
 
-## Live demo
+## 🚀 Live demo
 
-> **TODO — add the deployment URL here after the first Vercel deploy.**
+👉 **[View Deployment on Vercel](https://vercel.com/raj-suhandanis-projects/savora)**
 
 The deployed preview runs [demo mode](#demo-mode-no-database-server): it boots
 its own PostgreSQL, applies both migrations and seeds itself on first request.
@@ -58,7 +59,7 @@ dashboard — staff to `/admin`, a customer to `/account`. `npm run check:demo`
 verifies both accounts really sign in against a demo-mode server, so these
 credentials are verified rather than aspirational.
 
-## Screenshots
+## 📸 Screenshots
 
 Every image below is a real full-page capture of the running app — no mockups.
 
@@ -127,7 +128,7 @@ that hides itself when no client id is configured.
 
 **Privacy, phone.**
 
-## What is in the box
+## 📦 What is in the box
 
 | | |
 | --- | --- |
@@ -139,7 +140,7 @@ that hides itself when no client id is configured.
 | **Email** | Rendered HTML templates, delivered via Resend or SMTP, or written to `.outbox/` for reading locally |
 | **Security** | Per-IP rate limits, honeypots, constant-time cron secret comparison, bcrypt password hashing, re-authorised admin actions |
 
-## The double-booking guarantee
+## 🛡️ The double-booking guarantee
 
 Most booking systems treat a double-booking as a bug to be retried. This one
 makes it unrepresentable.
@@ -232,7 +233,7 @@ This is demo mode and nothing more. It is single-connection by nature, the data
 lives in `/tmp`, and it is not a production database. Point `DATABASE_URL` at a
 real server and no code changes are needed.
 
-## Quick start
+## ⚡ Quick start
 
 Requires **Node.js 20+** and nothing else.
 

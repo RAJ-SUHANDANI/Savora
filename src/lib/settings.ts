@@ -50,12 +50,17 @@ export const getSettings = cache(async (): Promise<SavoraSettings> => {
 
   // Creating the singleton on first read means a fresh clone works without
   // running the seed, which is a far kinder failure mode than a 500.
-  await prisma.restaurantSettings.create({
-    data: {
-      id: 1,
-      openingHours: undefined as never,
-    } as never,
-  });
+  try {
+    await prisma.restaurantSettings.create({
+      data: {
+        id: 1,
+        openingHours: undefined as never,
+      } as never,
+    });
+  } catch (error) {
+    console.error("Failed to create settings row, falling back to default:", error);
+    return DEFAULT_SETTINGS;
+  }
   return (await fetchSettingsRow()) ?? DEFAULT_SETTINGS;
 });
 
