@@ -82,26 +82,12 @@ viewport rather than scaled down to fit it.
 **Menu, desktop.** 26 seeded dishes across starters, mains, desserts and drinks,
 filterable by category, with dietary tags and live availability.
 
-<img src="docs/screenshots/08-menu-dark-mobile.jpg" alt="Savora menu on a phone in dark theme" width="30%" align="right">
-
-**Menu, dark, phone.** Dark mode is a designed palette, not an inverted one.
-
-<img src="docs/screenshots/04-menu-dish-mobile.jpg" alt="A single dish page on a phone" width="30%">
-
-**Dish detail, phone.** Ingredients, allergens, dietary tags and a pair of
-"you may also like" suggestions pulled from the same category.
-
 ### Booking
 
 <img src="docs/screenshots/05-reserve-desktop.jpg" alt="Savora reservation flow on a desktop" width="100%">
 
 **Booking, desktop.** Party size and date first, then live availability, then
 guest details — each step validates before the next one unlocks.
-
-<img src="docs/screenshots/06-reserve-steps-mobile.jpg" alt="Savora reservation flow on a phone in dark theme" width="30%" align="right">
-
-**Booking, dark, phone.** Availability comes from the database on every request,
-so a slot that was taken a second ago is shown as taken.
 
 ### The rest of the site
 
@@ -114,8 +100,6 @@ so a slot that was taken a second ago is shown as taken.
 **Newsletter.** Real signup with server-side validation, a honeypot and a
 per-IP rate limit — the address is stored, not emailed anywhere.
 
-<img src="docs/screenshots/10-contact-mobile.jpg" alt="Savora contact page on a phone" width="30%" align="right">
-
 **Contact, phone.**
 
 <img src="docs/screenshots/11-signin-desktop.jpg" alt="Savora sign-in page" width="100%">
@@ -123,10 +107,6 @@ per-IP rate limit — the address is stored, not emailed anywhere.
 **Sign in.** Auth.js with credentials — use the
 [demo accounts](#demo-accounts--sign-in) above. Plus an optional Google button
 that hides itself when no client id is configured.
-
-<img src="docs/screenshots/12-privacy-mobile.jpg" alt="Savora privacy page on a phone" width="30%" align="right">
-
-**Privacy, phone.**
 
 ## 📦 What is in the box
 
